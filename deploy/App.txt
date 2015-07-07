@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Kanban Using Alternate Field</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Jul 07 2015 09:39:03 GMT-0700 (PDT) -->
+    <!--  Build Date: Tue Jul 07 2015 09:51:55 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Jul 07 2015 09:39:03 GMT-0700 (PDT)";
-        var CHECKSUM = 15534941956;
+        var APP_BUILD_DATE = "Tue Jul 07 2015 09:51:55 GMT-0700 (PDT)";
+        var CHECKSUM = 15645517200;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -727,7 +727,7 @@ Ext.define("TSPortfolioKanbanAlternateField", {
     getSettingsFields: function () {
         var fields = [];
 
-        if (this.getContext().isFeatureEnabled('S79575_ADD_SWIMLANES_TO_PI_KANBAN')) {
+        //if (this.getContext().isFeatureEnabled('S79575_ADD_SWIMLANES_TO_PI_KANBAN')) {
             fields.push({
                 name: 'groupHorizontallyByField',
                 xtype: 'rowsettingsfield',
@@ -744,7 +744,7 @@ Ext.define("TSPortfolioKanbanAlternateField", {
                         !_.contains(['Archived', 'Portfolio Item Type', 'State'], attr.Name);
                 }
             });
-        }
+        //}
 
         fields.push({
             type: 'query',
@@ -809,8 +809,9 @@ Ext.define("TSPortfolioKanbanAlternateField", {
             loadDescription: 'Portfolio Kanban'
         });
 
-        if (this.getSetting('showRows') && this.getSetting('rowsField') &&
-            this.getContext().isFeatureEnabled('S79575_ADD_SWIMLANES_TO_PI_KANBAN')) {
+//        if (this.getSetting('showRows') && this.getSetting('rowsField') &&
+//            this.getContext().isFeatureEnabled('S79575_ADD_SWIMLANES_TO_PI_KANBAN')) {
+        if (this.getSetting('showRows') && this.getSetting('rowsField')) {
             Ext.apply(config, {
                 rowConfig: {
                     field: this.getSetting('rowsField'),

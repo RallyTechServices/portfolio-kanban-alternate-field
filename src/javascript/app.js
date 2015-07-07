@@ -48,7 +48,7 @@ Ext.define("TSPortfolioKanbanAlternateField", {
     getSettingsFields: function () {
         var fields = [];
 
-        if (this.getContext().isFeatureEnabled('S79575_ADD_SWIMLANES_TO_PI_KANBAN')) {
+        //if (this.getContext().isFeatureEnabled('S79575_ADD_SWIMLANES_TO_PI_KANBAN')) {
             fields.push({
                 name: 'groupHorizontallyByField',
                 xtype: 'rowsettingsfield',
@@ -65,7 +65,7 @@ Ext.define("TSPortfolioKanbanAlternateField", {
                         !_.contains(['Archived', 'Portfolio Item Type', 'State'], attr.Name);
                 }
             });
-        }
+        //}
 
         fields.push({
             type: 'query',
@@ -130,8 +130,9 @@ Ext.define("TSPortfolioKanbanAlternateField", {
             loadDescription: 'Portfolio Kanban'
         });
 
-        if (this.getSetting('showRows') && this.getSetting('rowsField') &&
-            this.getContext().isFeatureEnabled('S79575_ADD_SWIMLANES_TO_PI_KANBAN')) {
+//        if (this.getSetting('showRows') && this.getSetting('rowsField') &&
+//            this.getContext().isFeatureEnabled('S79575_ADD_SWIMLANES_TO_PI_KANBAN')) {
+        if (this.getSetting('showRows') && this.getSetting('rowsField')) {
             Ext.apply(config, {
                 rowConfig: {
                     field: this.getSetting('rowsField'),
