@@ -28,7 +28,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
         });
     },
 
-    addGridBoard: function () {
+    addGridBoard: function (options) {
         if (this.gridboard && this.piTypePicker && this.piTypePicker.rendered) {
             this.piTypePicker.up().remove(this.piTypePicker, false);
         }
@@ -59,7 +59,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
             margin: '3 9 14 0'
         });
     },
-
+    
     getCardBoardColumns: function () {
         return this._getStates().then({
             success: function (states) {
@@ -100,11 +100,11 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
     },
 
     _getStates: function () {
-        var deferred = new Deft.Deferred();
-        Ext.create('Rally.data.wsapi.Store', {
+        var deferred = Ext.create('Deft.Deferred');
+        
+        this.stateStore = Ext.create('Rally.data.wsapi.Store', {
             model: Ext.identityFn('State'),
             context: this.getContext().getDataContext(),
-            autoLoad: true,
             fetch: ['Name', 'WIPLimit', 'Description'],
             filters: [
                 {
@@ -121,13 +121,19 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
                     property: 'OrderIndex',
                     direction: 'ASC'
                 }
-            ],
-            listeners: {
-                load: function (store, records) {
+            ]
+        });
+        
+        this.stateStore.load({
+            callback: function(records, operation, success){
+                if (success){
                     deferred.resolve(records);
+                } else {
+                    deferred.reject(operation);
                 }
             }
         });
+            
         return deferred.promise;
     },
 
@@ -180,7 +186,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
     getGridStoreConfig: function () {
         return { models: this.piTypePicker.getAllTypeNames() };
     },
-
+    
     _createPITypePicker: function () {
         if (this.piTypePicker) {
             this.piTypePicker.destroy();

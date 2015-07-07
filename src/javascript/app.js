@@ -41,6 +41,8 @@ Ext.define("TSPortfolioKanbanAlternateField", {
     ],
 
     constructor: function(config) {
+        console.log('constructor',config);
+        
         config.settingsScope = config.isFullPageApp ? 'project' : 'app';
         this.callParent([config]);
     },
@@ -181,5 +183,17 @@ Ext.define("TSPortfolioKanbanAlternateField", {
         });
 
         return this.filterInfo;
+    },
+    
+    isExternal: function(){
+        return typeof(this.getAppId()) == 'undefined';
+    },
+    
+    //onSettingsUpdate:  Override
+    onSettingsUpdate: function (settings){
+        this.logger.log('onSettingsUpdate',settings);
+        Ext.apply(this, settings);
+
+        this.addGridBoard();
     }
 });

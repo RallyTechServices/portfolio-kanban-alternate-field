@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Kanban Using Alternate Field</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Jul 07 2015 09:51:55 GMT-0700 (PDT) -->
+    <!--  Build Date: Tue Jul 07 2015 11:18:39 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Jul 07 2015 09:51:55 GMT-0700 (PDT)";
-        var CHECKSUM = 15645517200;
+        var APP_BUILD_DATE = "Tue Jul 07 2015 11:18:39 GMT-0700 (PDT)";
+        var CHECKSUM = 16250572242;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -45,7 +45,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
         });
     },
 
-    addGridBoard: function () {
+    addGridBoard: function (options) {
         if (this.gridboard && this.piTypePicker && this.piTypePicker.rendered) {
             this.piTypePicker.up().remove(this.piTypePicker, false);
         }
@@ -76,7 +76,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
             margin: '3 9 14 0'
         });
     },
-
+    
     getCardBoardColumns: function () {
         return this._getStates().then({
             success: function (states) {
@@ -117,11 +117,11 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
     },
 
     _getStates: function () {
-        var deferred = new Deft.Deferred();
-        Ext.create('Rally.data.wsapi.Store', {
+        var deferred = Ext.create('Deft.Deferred');
+        
+        this.stateStore = Ext.create('Rally.data.wsapi.Store', {
             model: Ext.identityFn('State'),
             context: this.getContext().getDataContext(),
-            autoLoad: true,
             fetch: ['Name', 'WIPLimit', 'Description'],
             filters: [
                 {
@@ -138,13 +138,19 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
                     property: 'OrderIndex',
                     direction: 'ASC'
                 }
-            ],
-            listeners: {
-                load: function (store, records) {
+            ]
+        });
+        
+        this.stateStore.load({
+            callback: function(records, operation, success){
+                if (success){
                     deferred.resolve(records);
+                } else {
+                    deferred.reject(operation);
                 }
             }
         });
+            
         return deferred.promise;
     },
 
@@ -197,7 +203,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
     getGridStoreConfig: function () {
         return { models: this.piTypePicker.getAllTypeNames() };
     },
-
+    
     _createPITypePicker: function () {
         if (this.piTypePicker) {
             this.piTypePicker.destroy();
@@ -720,6 +726,8 @@ Ext.define("TSPortfolioKanbanAlternateField", {
     ],
 
     constructor: function(config) {
+        console.log('constructor',config);
+        
         config.settingsScope = config.isFullPageApp ? 'project' : 'app';
         this.callParent([config]);
     },
@@ -860,6 +868,18 @@ Ext.define("TSPortfolioKanbanAlternateField", {
         });
 
         return this.filterInfo;
+    },
+    
+    isExternal: function(){
+        return typeof(this.getAppId()) == 'undefined';
+    },
+    
+    //onSettingsUpdate:  Override
+    onSettingsUpdate: function (settings){
+        this.logger.log('onSettingsUpdate',settings);
+        Ext.apply(this, settings);
+
+        this.addGridBoard();
     }
 });
 
