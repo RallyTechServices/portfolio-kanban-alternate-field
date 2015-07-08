@@ -3,10 +3,10 @@
 <head>
     <title>Portfolio Kanban Using Alternate Field</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Jul 07 2015 16:33:56 GMT-0700 (PDT) -->
+    <!--  Build Date: Wed Jul 08 2015 12:25:52 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Jul 07 2015 16:33:56 GMT-0700 (PDT)";
+        var APP_BUILD_DATE = "Wed Jul 08 2015 12:25:52 GMT-0700 (PDT)";
         var CHECKSUM = [%= checksum %];
     </script>
     
@@ -16,7 +16,7 @@
         Rally.onReady(function() {
             
             
-               Rally.launchApp('TSPortfolioKanbanAlternateField', {
+               Rally.launchApp('TSPortfolioKanbanAlternateFieldApp', {
                    name: 'Portfolio Kanban Using Alternate Field'
                });
         });

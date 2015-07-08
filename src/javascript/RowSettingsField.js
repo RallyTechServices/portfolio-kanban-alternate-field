@@ -1,4 +1,3 @@
-
 /**
  * Allows configuring of rows for the cardboard
  *
@@ -63,7 +62,13 @@ Ext.define('Rally.apps.common.RowSettingsField', {
          * @cfg {String[]}
          * Array of models for which to list fields for
          */
-        modelNames: ['userstory', 'defect']
+        modelNames: ['portfolioitem/feature'],
+
+        /**
+         * @cfg {String[]}
+         * Array of field display names to show if found on at least 1 model, sortable and are not hidden
+         */
+        whiteListFields: []
     },
 
     initComponent: function() {
@@ -133,8 +138,8 @@ Ext.define('Rally.apps.common.RowSettingsField', {
             rowableFields = _.filter(allFields, function (field) {
                 var attr = field.attributeDefinition;
                 return attr && !attr.Hidden && attr.Sortable &&
-                    artifactModel.getModelsForField(field).length === models.length &&
-                    this.isAllowedFieldFn(field);
+                    ((artifactModel.getModelsForField(field).length === models.length &&
+                    this.isAllowedFieldFn(field)) || _.contains(this.whiteListFields, field.displayName));
             }, this);
 
         return _.map(rowableFields, function(field) {
