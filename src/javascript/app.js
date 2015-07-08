@@ -53,16 +53,11 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
 
     getOptions: function() {
         return [
-            {
-                text: 'Show Cycle Time Report',
+            /*{
+                text: 'John Rulez',
                 handler: this._showCycleTimeReport,
                 scope: this
-            },
-            {
-                text: 'Show Throughput Report',
-                handler: this._showThroughputReport,
-                scope: this
-            },
+            },*/
             {
                 text: 'Print',
                 handler: this._print,
