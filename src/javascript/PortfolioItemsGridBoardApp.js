@@ -28,6 +28,11 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
         });
     },
 
+    getGridBoardConfig: function(options) {
+        console.log('getGridBoardConfig',options);
+        return this.callParent(arguments);
+    },
+    
     addGridBoard: function (options) {
         if (this.gridboard && this.piTypePicker && this.piTypePicker.rendered) {
             this.piTypePicker.up().remove(this.piTypePicker, false);
@@ -61,6 +66,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
     },
     
     getCardBoardColumns: function () {
+        
         return this._getStates().then({
             success: function (states) {
                 return this._buildColumns(states);
@@ -69,7 +75,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
         });
     },
 
-    _buildColumns: function (states) {
+    _buildColumns: function (states) {        
         if (!states.length) {
             return undefined;
         }
@@ -83,56 +89,88 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
                 plugins: ['rallycardboardcollapsiblecolumns'].concat(this.getCardBoardColumnPlugins(null))
             }
         ];
-
-        return columns.concat(_.map(states, function (state) {
-            return {
-                value: state.get('_ref'),
-                wipLimit: state.get('WIPLimit'),
-                enableWipLimit: true,
-                columnHeaderConfig: {
-                    record: state,
-                    fieldToDisplay: 'Name',
-                    editable: false
-                },
-                plugins: ['rallycardboardcollapsiblecolumns'].concat(this.getCardBoardColumnPlugins(state))
-            };
-        }, this));
+        
+        var group_by_field = this.getSetting('groupByField') || "State";
+        if ( group_by_field == "State" ) {
+            columns = columns.concat(_.map(states, function (state) {
+                return {
+                    value: state.get('_ref'),
+                    wipLimit: state.get('WIPLimit'),
+                    enableWipLimit: true,
+                    columnHeaderConfig: {
+                        record: state,
+                        fieldToDisplay: 'Name',
+                        editable: false
+                    },
+                    plugins: ['rallycardboardcollapsiblecolumns'].concat(this.getCardBoardColumnPlugins(state))
+                };
+            }, this));
+        } else {
+            columns = columns.concat(_.map(states, function (state) {
+                return {
+                    value: state,
+                    /*wipLimit: state.get('WIPLimit'),*/
+                    enableWipLimit: true,
+                    plugins: ['rallycardboardcollapsiblecolumns']
+                };
+            }, this));
+        }
+        
+        return columns;
     },
 
     _getStates: function () {
         var deferred = Ext.create('Deft.Deferred');
         
-        this.stateStore = Ext.create('Rally.data.wsapi.Store', {
-            model: Ext.identityFn('State'),
-            context: this.getContext().getDataContext(),
-            fetch: ['Name', 'WIPLimit', 'Description'],
-            filters: [
-                {
-                    property: 'TypeDef',
-                    value: this.currentType.get('_ref')
-                },
-                {
-                    property: 'Enabled',
-                    value: true
+        var group_by_field = this.getSetting('groupByField') || "State";
+        if ( group_by_field == 'State' ) {
+            this.stateStore = Ext.create('Rally.data.wsapi.Store', {
+                model: Ext.identityFn('State'),
+                context: this.getContext().getDataContext(),
+                fetch: ['Name', 'WIPLimit', 'Description'],
+                filters: [
+                    {
+                        property: 'TypeDef',
+                        value: this.currentType.get('_ref')
+                    },
+                    {
+                        property: 'Enabled',
+                        value: true
+                    }
+                ],
+                sorters: [
+                    {
+                        property: 'OrderIndex',
+                        direction: 'ASC'
+                    }
+                ]
+            });
+            
+            this.stateStore.load({
+                callback: function(records, operation, success){
+                    if (success){
+                        deferred.resolve(records);
+                    } else {
+                        deferred.reject(operation);
+                    }
                 }
-            ],
-            sorters: [
-                {
-                    property: 'OrderIndex',
-                    direction: 'ASC'
+            });
+        } else {
+            Rally.data.ModelFactory.getModel({
+                type: 'PortfolioItem',
+                success: function(model) {
+                    model.getField(group_by_field).getAllowedValueStore().load({
+                        callback: function(records, operation, success) {
+                            var column_names = Ext.Array.map(records, function(allowedValue) {
+                                return allowedValue.get('StringValue');
+                            });
+                            
+                            deferred.resolve(column_names);
+                        }
+                    });
                 }
-            ]
-        });
-        
-        this.stateStore.load({
-            callback: function(records, operation, success){
-                if (success){
-                    deferred.resolve(records);
-                } else {
-                    deferred.reject(operation);
-                }
-            }
-        });
+            });
+        }
             
         return deferred.promise;
     },
@@ -145,7 +183,9 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
         return {};
     },
 
-    getCardBoardConfig: function (options) {
+    getCardBoardConfig: function (options) {        
+        var group_by_field = this.getSetting('groupByField') || "State";
+                
         options = options || {};
         var currentTypePath = this.currentType.get('TypePath');
         var filters = [];
@@ -159,7 +199,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
         }
 
         return {
-            attribute: 'State',
+            attribute: group_by_field,
             cardConfig: _.merge({
                 editable: true,
                 showColorIcon: true

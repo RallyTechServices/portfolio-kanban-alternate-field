@@ -1,7 +1,7 @@
 {
     "name": "Portfolio Kanban Using Alternate Field",
     "className": "TSPortfolioKanbanAlternateField",
-    "server": "https://demo-east.rallydev.com",
+    "server": "https://rally1.rallydev.com",
     "sdk": "2.0",
     "apiKey": "_PUT_APIKEY_HERE_"
 }

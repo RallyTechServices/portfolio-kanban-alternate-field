@@ -25,6 +25,7 @@ Ext.define("TSPortfolioKanbanAlternateField", {
 
     config: {
         defaultSettings: {
+            groupByField: 'State',
             fields: 'Discussion,PercentDoneByStoryCount,UserStories,Milestones'
         }
     },
@@ -40,9 +41,7 @@ Ext.define("TSPortfolioKanbanAlternateField", {
         }
     ],
 
-    constructor: function(config) {
-        console.log('constructor',config);
-        
+    constructor: function(config) {        
         config.settingsScope = config.isFullPageApp ? 'project' : 'app';
         this.callParent([config]);
     },
@@ -50,6 +49,30 @@ Ext.define("TSPortfolioKanbanAlternateField", {
     getSettingsFields: function () {
         var fields = [];
 
+        fields.push({
+            name: 'groupByField',
+            xtype: 'rallyfieldcombobox',
+            model: Ext.identityFn('PortfolioItem'),
+            margin: '10px 0 0 0',
+            fieldLabel: 'Columns',
+            listeners: {
+                select: function(combo) {
+                    this.fireEvent('fieldselected', combo.getRecord().get('fieldDefinition'));
+                },
+                ready: function(combo) {
+                    combo.store.filterBy(function(record) {
+                        var attr = record.get('fieldDefinition').attributeDefinition;
+                        if ( attr.ElementName == "State" ) { return true; }
+                        return attr && !attr.ReadOnly && attr.Constrained && attr.AttributeType !== 'OBJECT' && attr.AttributeType !== 'COLLECTION';
+                    });
+                    if (combo.getRecord()) {
+                        this.fireEvent('fieldselected', combo.getRecord().get('fieldDefinition'));
+                    }
+                }
+            },
+            bubbleEvents: ['fieldselected', 'fieldready']
+        });
+            
         //if (this.getContext().isFeatureEnabled('S79575_ADD_SWIMLANES_TO_PI_KANBAN')) {
             fields.push({
                 name: 'groupHorizontallyByField',
@@ -194,6 +217,21 @@ Ext.define("TSPortfolioKanbanAlternateField", {
         this.logger.log('onSettingsUpdate',settings);
         Ext.apply(this, settings);
 
+//        
+//        this.getCardBoardColumns().then({
+//            success: function (columns) {
+//                this.addGridBoard({
+//                    columns: []
+//                });
+//    
+//                if (!columns || columns.length === 0) {
+//                    this.showNoColumns();
+//                    this.publishComponentReady();
+//                }
+//            },
+//            scope: this
+//        });
+                            
         this.addGridBoard();
     }
 });

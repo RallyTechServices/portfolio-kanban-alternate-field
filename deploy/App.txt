@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Kanban Using Alternate Field</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Tue Jul 07 2015 11:18:39 GMT-0700 (PDT) -->
+    <!--  Build Date: Tue Jul 07 2015 16:33:56 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Tue Jul 07 2015 11:18:39 GMT-0700 (PDT)";
-        var CHECKSUM = 16250572242;
+        var APP_BUILD_DATE = "Tue Jul 07 2015 16:33:56 GMT-0700 (PDT)";
+        var CHECKSUM = 19431414984;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -45,6 +45,11 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
         });
     },
 
+    getGridBoardConfig: function(options) {
+        console.log('getGridBoardConfig',options);
+        return this.callParent(arguments);
+    },
+    
     addGridBoard: function (options) {
         if (this.gridboard && this.piTypePicker && this.piTypePicker.rendered) {
             this.piTypePicker.up().remove(this.piTypePicker, false);
@@ -78,6 +83,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
     },
     
     getCardBoardColumns: function () {
+        
         return this._getStates().then({
             success: function (states) {
                 return this._buildColumns(states);
@@ -86,7 +92,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
         });
     },
 
-    _buildColumns: function (states) {
+    _buildColumns: function (states) {        
         if (!states.length) {
             return undefined;
         }
@@ -100,56 +106,88 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
                 plugins: ['rallycardboardcollapsiblecolumns'].concat(this.getCardBoardColumnPlugins(null))
             }
         ];
-
-        return columns.concat(_.map(states, function (state) {
-            return {
-                value: state.get('_ref'),
-                wipLimit: state.get('WIPLimit'),
-                enableWipLimit: true,
-                columnHeaderConfig: {
-                    record: state,
-                    fieldToDisplay: 'Name',
-                    editable: false
-                },
-                plugins: ['rallycardboardcollapsiblecolumns'].concat(this.getCardBoardColumnPlugins(state))
-            };
-        }, this));
+        
+        var group_by_field = this.getSetting('groupByField') || "State";
+        if ( group_by_field == "State" ) {
+            columns = columns.concat(_.map(states, function (state) {
+                return {
+                    value: state.get('_ref'),
+                    wipLimit: state.get('WIPLimit'),
+                    enableWipLimit: true,
+                    columnHeaderConfig: {
+                        record: state,
+                        fieldToDisplay: 'Name',
+                        editable: false
+                    },
+                    plugins: ['rallycardboardcollapsiblecolumns'].concat(this.getCardBoardColumnPlugins(state))
+                };
+            }, this));
+        } else {
+            columns = columns.concat(_.map(states, function (state) {
+                return {
+                    value: state,
+                    /*wipLimit: state.get('WIPLimit'),*/
+                    enableWipLimit: true,
+                    plugins: ['rallycardboardcollapsiblecolumns']
+                };
+            }, this));
+        }
+        
+        return columns;
     },
 
     _getStates: function () {
         var deferred = Ext.create('Deft.Deferred');
         
-        this.stateStore = Ext.create('Rally.data.wsapi.Store', {
-            model: Ext.identityFn('State'),
-            context: this.getContext().getDataContext(),
-            fetch: ['Name', 'WIPLimit', 'Description'],
-            filters: [
-                {
-                    property: 'TypeDef',
-                    value: this.currentType.get('_ref')
-                },
-                {
-                    property: 'Enabled',
-                    value: true
+        var group_by_field = this.getSetting('groupByField') || "State";
+        if ( group_by_field == 'State' ) {
+            this.stateStore = Ext.create('Rally.data.wsapi.Store', {
+                model: Ext.identityFn('State'),
+                context: this.getContext().getDataContext(),
+                fetch: ['Name', 'WIPLimit', 'Description'],
+                filters: [
+                    {
+                        property: 'TypeDef',
+                        value: this.currentType.get('_ref')
+                    },
+                    {
+                        property: 'Enabled',
+                        value: true
+                    }
+                ],
+                sorters: [
+                    {
+                        property: 'OrderIndex',
+                        direction: 'ASC'
+                    }
+                ]
+            });
+            
+            this.stateStore.load({
+                callback: function(records, operation, success){
+                    if (success){
+                        deferred.resolve(records);
+                    } else {
+                        deferred.reject(operation);
+                    }
                 }
-            ],
-            sorters: [
-                {
-                    property: 'OrderIndex',
-                    direction: 'ASC'
+            });
+        } else {
+            Rally.data.ModelFactory.getModel({
+                type: 'PortfolioItem',
+                success: function(model) {
+                    model.getField(group_by_field).getAllowedValueStore().load({
+                        callback: function(records, operation, success) {
+                            var column_names = Ext.Array.map(records, function(allowedValue) {
+                                return allowedValue.get('StringValue');
+                            });
+                            
+                            deferred.resolve(column_names);
+                        }
+                    });
                 }
-            ]
-        });
-        
-        this.stateStore.load({
-            callback: function(records, operation, success){
-                if (success){
-                    deferred.resolve(records);
-                } else {
-                    deferred.reject(operation);
-                }
-            }
-        });
+            });
+        }
             
         return deferred.promise;
     },
@@ -162,7 +200,9 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
         return {};
     },
 
-    getCardBoardConfig: function (options) {
+    getCardBoardConfig: function (options) {        
+        var group_by_field = this.getSetting('groupByField') || "State";
+                
         options = options || {};
         var currentTypePath = this.currentType.get('TypePath');
         var filters = [];
@@ -176,7 +216,7 @@ Ext.define('Rally.apps.common.PortfolioItemsGridBoardApp', {
         }
 
         return {
-            attribute: 'State',
+            attribute: group_by_field,
             cardConfig: _.merge({
                 editable: true,
                 showColorIcon: true
@@ -710,6 +750,7 @@ Ext.define("TSPortfolioKanbanAlternateField", {
 
     config: {
         defaultSettings: {
+            groupByField: 'State',
             fields: 'Discussion,PercentDoneByStoryCount,UserStories,Milestones'
         }
     },
@@ -725,9 +766,7 @@ Ext.define("TSPortfolioKanbanAlternateField", {
         }
     ],
 
-    constructor: function(config) {
-        console.log('constructor',config);
-        
+    constructor: function(config) {        
         config.settingsScope = config.isFullPageApp ? 'project' : 'app';
         this.callParent([config]);
     },
@@ -735,6 +774,30 @@ Ext.define("TSPortfolioKanbanAlternateField", {
     getSettingsFields: function () {
         var fields = [];
 
+        fields.push({
+            name: 'groupByField',
+            xtype: 'rallyfieldcombobox',
+            model: Ext.identityFn('PortfolioItem'),
+            margin: '10px 0 0 0',
+            fieldLabel: 'Columns',
+            listeners: {
+                select: function(combo) {
+                    this.fireEvent('fieldselected', combo.getRecord().get('fieldDefinition'));
+                },
+                ready: function(combo) {
+                    combo.store.filterBy(function(record) {
+                        var attr = record.get('fieldDefinition').attributeDefinition;
+                        if ( attr.ElementName == "State" ) { return true; }
+                        return attr && !attr.ReadOnly && attr.Constrained && attr.AttributeType !== 'OBJECT' && attr.AttributeType !== 'COLLECTION';
+                    });
+                    if (combo.getRecord()) {
+                        this.fireEvent('fieldselected', combo.getRecord().get('fieldDefinition'));
+                    }
+                }
+            },
+            bubbleEvents: ['fieldselected', 'fieldready']
+        });
+            
         //if (this.getContext().isFeatureEnabled('S79575_ADD_SWIMLANES_TO_PI_KANBAN')) {
             fields.push({
                 name: 'groupHorizontallyByField',
@@ -879,6 +942,21 @@ Ext.define("TSPortfolioKanbanAlternateField", {
         this.logger.log('onSettingsUpdate',settings);
         Ext.apply(this, settings);
 
+//        
+//        this.getCardBoardColumns().then({
+//            success: function (columns) {
+//                this.addGridBoard({
+//                    columns: []
+//                });
+//    
+//                if (!columns || columns.length === 0) {
+//                    this.showNoColumns();
+//                    this.publishComponentReady();
+//                }
+//            },
+//            scope: this
+//        });
+                            
         this.addGridBoard();
     }
 });
