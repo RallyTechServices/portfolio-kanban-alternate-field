@@ -76,3 +76,15 @@
     height: 22px;
     margin-top: 3px;
 }
+
+.rui-card .rui-card-content .status-content>.status-field{
+  background-color: white;
+  border: none;
+}
+
+.timeInState {
+  border-top: 1px dotted #CCC;
+  color: #666;
+  margin-top: 5px;
+  padding-top: 5px;
+}

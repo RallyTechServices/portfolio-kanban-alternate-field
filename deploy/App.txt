@@ -3,11 +3,11 @@
 <head>
     <title>Portfolio Kanban Using Alternate Field</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Wed Jul 08 2015 13:48:12 GMT-0700 (PDT) -->
+    <!--  Build Date: Thu Jul 09 2015 10:43:59 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Wed Jul 08 2015 13:48:12 GMT-0700 (PDT)";
-        var CHECKSUM = 35846490988;
+        var APP_BUILD_DATE = "Thu Jul 09 2015 10:43:59 GMT-0700 (PDT)";
+        var CHECKSUM = 37918063409;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -855,6 +855,44 @@ Ext.define('Rally.technicalservices.Logger',{
 
 });
 
+/**
+ * @private
+ * Displays the result of calculated fields on a card
+ * 
+ * Override to change display
+ * 
+ */
+Ext.override(Rally.ui.cardboard.plugin.CardAge, {
+    
+    _addField: function() {
+        var me = this,
+            cmp = me.cmp;
+
+        this.cmp.addField({
+            name: cmp.ageFieldName,
+            renderTpl: function() {
+                var age = me._getAge();
+                if (age >= cmp.showAge) {
+                    return [
+                        '<div class="', [cmp.ageFieldName, 'timeInState'].join(' '), '">',
+                            '<span>',
+                                age.toString(),
+                                ' ',
+                                Ext.util.Inflector.pluralize(cmp.ageIntervalUnit),
+                            ' in this column</span>',
+                        '</div>'
+                    ].join('');
+                }
+                return '';
+            },
+            isStatus: true,
+            hasValue: function() {
+                var record = cmp.getRecord();
+                return record.raw[cmp.ageFieldName] !== undefined || record.get(cmp.ageFieldName);
+            }
+        });
+    }
+});
 Ext.define("TSPortfolioKanbanAlternateFieldApp", {
     extend: 'Rally.app.App',
     requires: [
@@ -1375,6 +1413,19 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
     height: 22px;
     margin-top: 3px;
 }
+
+.rui-card .rui-card-content .status-content>.status-field{
+  background-color: white;
+  border: none;
+}
+
+.timeInState {
+  border-top: 1px dotted #CCC;
+  color: #666;
+  margin-top: 5px;
+  padding-top: 5px;
+}
+
     </style>
 
 </head>
