@@ -134,21 +134,37 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
                         stateId: context.getScopedStateId('kanban-add-new')
                     }
                 },
+                // {
+                //     ptype: 'rallygridboardcustomfiltercontrol',
+                //     filterChildren: true,
+                //     filterControlConfig: {
+                //         blackListFields: [],
+                //         whiteListFields: ['Milestones'],
+                //         margin: '3 9 3 30',
+                //         modelNames: modelNames,
+                //         stateful: true,
+                //         stateId: context.getScopedStateId('kanban-custom-filter-button')
+                //     },
+                //     showOwnerFilter: true,
+                //     ownerFilterControlConfig: {
+                //         stateful: true,
+                //         stateId: context.getScopedStateId('kanban-owner-filter')
+                //     }
+                // },
                 {
-                    ptype: 'rallygridboardcustomfiltercontrol',
-                    filterChildren: true,
-                    filterControlConfig: {
-                        blackListFields: [],
-                        whiteListFields: ['Milestones'],
-                        margin: '3 9 3 30',
+                    ptype: 'rallygridboardinlinefiltercontrol',
+                    inlineFilterButtonConfig: {
+                        stateful: true,
+                        stateId: context.getScopedStateId('kanban-filter'),
                         modelNames: modelNames,
-                        stateful: true,
-                        stateId: context.getScopedStateId('kanban-custom-filter-button')
-                    },
-                    showOwnerFilter: true,
-                    ownerFilterControlConfig: {
-                        stateful: true,
-                        stateId: context.getScopedStateId('kanban-owner-filter')
+                        margin: '3 9 3 30',
+                        inlineFilterPanelConfig: 
+                        {
+                            collapsed: false,
+                            quickFilterPanelConfig: {
+                                defaultFields: ['Owner']
+                            }
+                        }
                     }
                 },
                 {
@@ -170,7 +186,8 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
             modelNames: modelNames,
             storeConfig: {
                 filters: this._getFilters()
-            },
+            }
+            ,
             height: this.getHeight()
         };
     },
@@ -186,7 +203,7 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
                     ptype: 'rallycolumnpolicy',
                     app: this
                 }],
-                value: column,
+                value: values.type == 'state' || values.type == 'AllowedAttributeValue' ? values.ref : column,
                 columnHeaderConfig: {
                     headerTpl: column || 'None'
                 },

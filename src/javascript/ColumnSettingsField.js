@@ -51,7 +51,7 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
         this.callParent(arguments);
 
         this._store = Ext.create('Ext.data.Store', {
-            fields: ['column', 'shown', 'wip', 'scheduleStateMapping', 'stateMapping', 'cardFields'],
+            fields: ['column', 'shown', 'wip', 'scheduleStateMapping', 'stateMapping', 'cardFields','ref','type'],
             data: []
         });
 
@@ -115,7 +115,18 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
                         return value === '' ? value : parseInt(value, 10);
                     }
                 }
-            }/*,
+            },
+            {
+                text:'ref',
+                dataIndex:'ref',
+                hidden:true
+            },
+            {
+                text:'type',
+                dataIndex:'type',
+                hidden:true
+            }
+            /*,
             {
                 text: 'Schedule State Mapping',
                 dataIndex: 'scheduleStateMapping',
@@ -249,6 +260,8 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
         this._store.each(function(record) {
             if (record.get('shown')) {
                 columns[record.get('column')] = {
+                    ref: record.get('ref'),
+                    type: record.get('type'),                    
                     wip: record.get('wip'),
                     scheduleStateMapping: record.get('scheduleStateMapping'),
                     stateMapping: record.get('stateMapping')
@@ -299,6 +312,8 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
 
         var column = {
             column: columnName,
+            ref: allowedValue.get('_ref') != "null" ? allowedValue.get('_ref') : null,
+            type: allowedValue.get('_type'),
             shown: false,
             wip: '',
             scheduleStateMapping: '',
