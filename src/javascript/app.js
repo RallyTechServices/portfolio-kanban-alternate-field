@@ -203,7 +203,7 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
                     ptype: 'rallycolumnpolicy',
                     app: this
                 }],
-                value: values.type == 'state' || values.type == 'AllowedAttributeValue' ? values.ref : column,
+                value: values.type == 'state' || column == "" ? values.ref : column,
                 columnHeaderConfig: {
                     headerTpl: column || 'None'
                 },
