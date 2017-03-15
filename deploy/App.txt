@@ -3,14 +3,14 @@
 <head>
     <title>Portfolio Kanban Using Alternate Field</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Thu Jul 09 2015 10:43:59 GMT-0700 (PDT) -->
+    <!--  Build Date: Tue Mar 14 2017 22:09:30 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Thu Jul 09 2015 10:43:59 GMT-0700 (PDT)";
-        var CHECKSUM = 37918063409;
+        var APP_BUILD_DATE = "Tue Mar 14 2017 22:09:30 GMT-0700 (PDT)";
+        var CHECKSUM = 44106817288;
     </script>
     
-    <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
+    <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
 
     <script type="text/javascript">
         Rally.onReady(function() {
@@ -184,7 +184,7 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
         this.callParent(arguments);
 
         this._store = Ext.create('Ext.data.Store', {
-            fields: ['column', 'shown', 'wip', 'scheduleStateMapping', 'stateMapping', 'cardFields'],
+            fields: ['column', 'shown', 'wip', 'scheduleStateMapping', 'stateMapping', 'cardFields','ref','type'],
             data: []
         });
 
@@ -248,7 +248,18 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
                         return value === '' ? value : parseInt(value, 10);
                     }
                 }
-            }/*,
+            },
+            {
+                text:'ref',
+                dataIndex:'ref',
+                hidden:true
+            },
+            {
+                text:'type',
+                dataIndex:'type',
+                hidden:true
+            }
+            /*,
             {
                 text: 'Schedule State Mapping',
                 dataIndex: 'scheduleStateMapping',
@@ -382,6 +393,8 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
         this._store.each(function(record) {
             if (record.get('shown')) {
                 columns[record.get('column')] = {
+                    ref: record.get('ref'),
+                    type: record.get('type'),                    
                     wip: record.get('wip'),
                     scheduleStateMapping: record.get('scheduleStateMapping'),
                     stateMapping: record.get('stateMapping')
@@ -432,6 +445,8 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
 
         var column = {
             column: columnName,
+            ref: allowedValue.get('_ref') != "null" ? allowedValue.get('_ref') : null,
+            type: allowedValue.get('_type'),
             shown: false,
             wip: '',
             scheduleStateMapping: '',
@@ -660,7 +675,11 @@ Ext.define('Rally.apps.kanban.Settings', {
                     ready: function(combo) {
                         combo.store.filterBy(function(record) {
                             var attr = record.get('fieldDefinition').attributeDefinition;
-                            return attr && !attr.ReadOnly && attr.Constrained && attr.AttributeType !== 'OBJECT' && attr.AttributeType !== 'COLLECTION';
+                            // if(attr.AttributeType !== 'OBJECT'){
+                            //     console.log('OBJECT>>',record.get('value'));
+                            // }
+                            // return attr && !attr.ReadOnly && attr.Constrained && attr.AttributeType !== 'OBJECT' && attr.AttributeType !== 'COLLECTION';
+                            return attr && !attr.ReadOnly && attr.Constrained && attr.AttributeType !== 'COLLECTION';
                         });
                         if (combo.getRecord()) {
                             this.fireEvent('fieldselected', combo.getRecord().get('fieldDefinition'));
@@ -893,6 +912,66 @@ Ext.override(Rally.ui.cardboard.plugin.CardAge, {
         });
     }
 });
+
+Ext.override(Rally.ui.cardboard.CardBoard, {
+    _createRow: function(rowConfig, applySort) {
+        var collapsed = false;
+        if (this.rowConfig && this.rowConfig.field && this.state && this.state.collapsedRows) {
+            var rowKey = this._getRowKey(this.rowConfig.field, rowConfig.value);
+            collapsed = this.state.collapsedRows.hasOwnProperty(rowKey);
+        }
+
+        var defaultRowConfig = {
+            el: this.getEl().down('tbody.columns'),
+            columns: this.columnDefinitions,
+            context: this.getAppContextOrEnvironmentContext(),
+            fieldDef: this.rowConfig && this.rowConfig.fieldDef,
+            collapsed: collapsed
+        };
+
+        if (this.rowConfig) {
+            if(this.rowConfig.headerConfig) {
+                defaultRowConfig.headerConfig = this.rowConfig.headerConfig;
+            }
+            if(this.rowConfig.sortField) {
+                defaultRowConfig.sortField = this.rowConfig.sortField;
+            }
+        }
+
+        var row = Ext.create('Rally.ui.cardboard.row.Row',
+            Ext.apply(defaultRowConfig, rowConfig)),
+            sortIndex = applySort ? this._getSortedIndex(row) : this.rowDefinitions.length;
+        this.rowDefinitions.splice(sortIndex, 0, row);
+        row.insert(this.rowDefinitions[sortIndex + 1]);
+
+        if(row.isCollapsible()) {
+            row.on('collapse', this.saveState, this);
+            row.on('expand', this.saveState, this);
+        }
+        return row;
+    },
+        _onColumnReady: function (column, records) {
+            this._columnsLoaded = this._columnsLoaded || 0;
+            this._columnsLoaded++;
+            this.fireEvent('columnready', column, this);
+            if (this._columnsLoaded === this.columnDefinitions.length) {
+                this._onAllColumnsReady();
+
+                if(!this.getRows().length) {
+                    if(this.rowConfig) {
+                        this._createRow({
+                            showHeader: true,
+                            value: null,
+                            isBlankSlate: true
+                        });
+                    } else {
+                        this._createDefaultRow();
+                    }
+                }
+            }
+        }
+
+});
 Ext.define("TSPortfolioKanbanAlternateFieldApp", {
     extend: 'Rally.app.App',
     requires: [
@@ -1029,21 +1108,37 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
                         stateId: context.getScopedStateId('kanban-add-new')
                     }
                 },
+                // {
+                //     ptype: 'rallygridboardcustomfiltercontrol',
+                //     filterChildren: true,
+                //     filterControlConfig: {
+                //         blackListFields: [],
+                //         whiteListFields: ['Milestones'],
+                //         margin: '3 9 3 30',
+                //         modelNames: modelNames,
+                //         stateful: true,
+                //         stateId: context.getScopedStateId('kanban-custom-filter-button')
+                //     },
+                //     showOwnerFilter: true,
+                //     ownerFilterControlConfig: {
+                //         stateful: true,
+                //         stateId: context.getScopedStateId('kanban-owner-filter')
+                //     }
+                // },
                 {
-                    ptype: 'rallygridboardcustomfiltercontrol',
-                    filterChildren: true,
-                    filterControlConfig: {
-                        blackListFields: [],
-                        whiteListFields: ['Milestones'],
-                        margin: '3 9 3 30',
+                    ptype: 'rallygridboardinlinefiltercontrol',
+                    inlineFilterButtonConfig: {
+                        stateful: true,
+                        stateId: context.getScopedStateId('kanban-filter'),
                         modelNames: modelNames,
-                        stateful: true,
-                        stateId: context.getScopedStateId('kanban-custom-filter-button')
-                    },
-                    showOwnerFilter: true,
-                    ownerFilterControlConfig: {
-                        stateful: true,
-                        stateId: context.getScopedStateId('kanban-owner-filter')
+                        margin: '3 9 3 30',
+                        inlineFilterPanelConfig: 
+                        {
+                            collapsed: false,
+                            quickFilterPanelConfig: {
+                                defaultFields: ['Owner']
+                            }
+                        }
                     }
                 },
                 {
@@ -1065,7 +1160,8 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
             modelNames: modelNames,
             storeConfig: {
                 filters: this._getFilters()
-            },
+            }
+            ,
             height: this.getHeight()
         };
     },
@@ -1081,7 +1177,7 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
                     ptype: 'rallycolumnpolicy',
                     app: this
                 }],
-                value: column,
+                value: values.type == 'state' || values.type == 'AllowedAttributeValue' ? values.ref : column,
                 columnHeaderConfig: {
                     headerTpl: column || 'None'
                 },
