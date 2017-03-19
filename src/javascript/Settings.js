@@ -11,9 +11,23 @@ Ext.define('Rally.apps.kanban.Settings', {
     getFields: function(config) {
         var items = [
             {
+                name: 'modelType',
+                xtype: 'rallyportfolioitemtypecombobox',
+                bubbleEvents: ['modelselected'],
+                fieldLabel: 'Portfolio Item Type',
+                valueField: 'TypePath',
+                listeners: {
+                    change: function(cb){
+                        if (cb.getRecord() && cb.getRecord().get('TypePath')){
+                            var model = cb.getRecord().get('TypePath');
+                            this.fireEvent('modelselected',model);
+                        }
+                    }
+                }
+            },{
                 name: 'groupByField',
                 xtype: 'rallyfieldcombobox',
-                model: Ext.identityFn('PortfolioItem/Feature'),
+                model: Ext.identityFn(config.modelType),
                 margin: '10px 0 0 0',
                 fieldLabel: 'Columns',
                 listeners: {
@@ -34,6 +48,17 @@ Ext.define('Rally.apps.kanban.Settings', {
                         }
                     }
                 },
+                handlesEvents: {
+                    select: function(cb){
+
+                        if (cb.getRecord() && cb.getRecord().get('TypePath')){
+                            var selectedField = this.getValue();
+                            this.refreshWithNewModelType(cb.getRecord().get('TypePath'));
+                            this.setValue(selectedField);
+                        }
+
+                    }
+                },
                 bubbleEvents: ['fieldselected', 'fieldready']
             },
             
@@ -45,9 +70,14 @@ Ext.define('Rally.apps.kanban.Settings', {
                 xtype: 'kanbancolumnsettingsfield',
                 shouldShowColumnLevelFieldPicker: config.shouldShowColumnLevelFieldPicker,
                 defaultCardFields: config.defaultCardFields,
+                modelType: config.modelType,
                 handlesEvents: {
                     fieldselected: function(field) {
                         this.refreshWithNewField(field);
+                    },
+                    modelselected: function(model){
+                        console.log('modelselected', model);
+                        this.refreshWithNewModel(model);
                     }
                 },
                 listeners: {

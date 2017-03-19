@@ -96,3 +96,44 @@ Ext.override(Rally.ui.cardboard.CardBoard, {
         }
 
 });
+
+Ext.override(Rally.ui.cardboard.Column, {
+    getStoreFilter: function(){
+        var filters = {
+            property: this.attribute,
+            operator: '=',
+            value: this.getValue() || ""  //I need to do this to accomodate the INvestment category field
+        };
+        return filters;
+    },
+    /**
+     * Determines whether the specified record may be contained within this column
+     * (If its value matches that of this column)
+     *
+     * @param {Rally.data.Model} record
+     */
+    isMatchingRecord: function(record) {
+        var recordValue = record.get(this.attribute),
+            field = record.getField(this.attribute),
+            typePath = record.self.typePath,
+            models = this.store.models || Ext.Array.from(this.store.model),
+            supportedTypes = _.pluck(models, 'typePath');
+
+        if (!field || !_.contains(supportedTypes, typePath)) {
+            return false;
+        }
+
+        var columnValue = this.getValue();
+
+        // Field values can be converted from null. So we need to convert the column
+        // value in case it is null
+        if (Ext.isFunction(field.convert)) {
+            columnValue = field.convert(columnValue, record);
+        }
+
+        return (columnValue === recordValue ||
+        (Rally.util.Ref.isRefUri(columnValue) &&
+        Rally.util.Ref.getRelativeUri(recordValue) === Rally.util.Ref.getRelativeUri(columnValue)) ||
+            !columnValue && (recordValue === "None"));  //I need to do this to accomodate the INvestment category field
+    }
+});

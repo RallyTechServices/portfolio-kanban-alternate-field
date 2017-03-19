@@ -39,13 +39,24 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
             hideReleasedCards: false,
             showCardAge: true,
             cardAgeThreshold: 3,
-            pageSize: 25
+            pageSize: 25,
+            modelType: null
         }
     },
 
     launch: function() {
+        var modelType = this.getSetting('modelType');
+
+        if (!modelType){
+            this.add({
+                xtype: 'container',
+                html: '<div class="no-data-container">Please set up the configuration settings in the board.<div class="secondary-message">'
+            });
+            return;
+        }
+
         Rally.data.ModelFactory.getModel({
-            type: 'PortfolioItem/Feature',
+            type: modelType,
             success: this._onModelRetrieved,
             scope: this
         });
@@ -53,11 +64,6 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
 
     getOptions: function() {
         return [
-            /*{
-                text: 'John Rulez',
-                handler: this._showCycleTimeReport,
-                scope: this
-            },*/
             {
                 text: 'Print',
                 handler: this._print,
@@ -69,7 +75,8 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
     getSettingsFields: function() {
         return Rally.apps.kanban.Settings.getFields({
             shouldShowColumnLevelFieldPicker: this._shouldShowColumnLevelFieldPicker(),
-            defaultCardFields: this.getSetting('cardFields')
+            defaultCardFields: this.getSetting('cardFields'),
+            modelType: this.getSetting('modelType')
         });
     },
 
@@ -108,7 +115,14 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
         }
 
         this.logger.log('config:', this._getGridboardConfig(cardboardConfig));
-        this.gridboard = this.add(this._getGridboardConfig(cardboardConfig));
+
+        if (!this.rendered){
+            this.on('render', function(){
+                this.gridboard = this.add(this._getGridboardConfig(cardboardConfig));
+            }, this);
+        } else {
+            this.gridboard = this.add(this._getGridboardConfig(cardboardConfig));
+        }
     },
 
     _getGridboardConfig: function(cardboardConfig) {
@@ -134,23 +148,6 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
                         stateId: context.getScopedStateId('kanban-add-new')
                     }
                 },
-                // {
-                //     ptype: 'rallygridboardcustomfiltercontrol',
-                //     filterChildren: true,
-                //     filterControlConfig: {
-                //         blackListFields: [],
-                //         whiteListFields: ['Milestones'],
-                //         margin: '3 9 3 30',
-                //         modelNames: modelNames,
-                //         stateful: true,
-                //         stateId: context.getScopedStateId('kanban-custom-filter-button')
-                //     },
-                //     showOwnerFilter: true,
-                //     ownerFilterControlConfig: {
-                //         stateful: true,
-                //         stateId: context.getScopedStateId('kanban-owner-filter')
-                //     }
-                // },
                 {
                     ptype: 'rallygridboardinlinefiltercontrol',
                     inlineFilterButtonConfig: {
@@ -186,9 +183,8 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
             modelNames: modelNames,
             storeConfig: {
                 filters: this._getFilters()
-            }
-            ,
-            height: this.getHeight()
+            },
+           // height: this.getHeight && this.getHeight()
         };
     },
 
@@ -304,44 +300,12 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
         var columnSetting = this.getSetting('columns');
         return columnSetting && Ext.JSON.decode(columnSetting);
     },
-
-    _buildReportConfig: function(report) {
-        var reportConfig = {
-            report: report,
-            work_items: this._getWorkItemTypesForChart()
-        };
-        if (this.getSetting('groupByField') !== 'ScheduleState') {
-            reportConfig.filter_field = this.groupByField.displayName;
-        }
-        return reportConfig;
-    },
-
-    _showCycleTimeReport: function() {
-        this._showReportDialog('Cycle Time Report',
-            this._buildReportConfig(Rally.ui.report.StandardReport.Reports.CycleLeadTime));
-    },
-
-    _showThroughputReport: function() {
-        this._showReportDialog('Throughput Report',
-            this._buildReportConfig(Rally.ui.report.StandardReport.Reports.Throughput));
-    },
-
     _print: function() {
         this.gridboard.getGridOrBoard().openPrintPage({title: 'Kanban Board'});
     },
 
-    _getWorkItemTypesForChart: function() {
-        var types = this.gridboard.getGridOrBoard().getTypes(),
-            typeMap = {
-                hierarchicalrequirement: 'G',
-                defect: 'D',
-                'portfolioitem/feature': 'P'
-            };
-        return types.length === 2 ? 'N' : typeMap[types[0]];
-    },
-
     _getDefaultTypes: function() {
-        return ['PortfolioItem/Feature'];
+        return [this.getSetting('modelType')];
 //        return ['User Story', 'Defect'];
     },
 
@@ -410,11 +374,10 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
     _onBeforeCardSaved: function(column, card, type) {
         var columnSetting = this._getColumnSetting();
         if (columnSetting) {
-            var setting = columnSetting[column.getValue()];
-//            
-//            if (setting && setting.stateMapping && card.getRecord().get('_type') == 'defect') {
-//                card.getRecord().set('State', setting.stateMapping);
-//            }
+            var setting = columnSetting[column.getValue() || ""];
+            if (setting && (setting.portfolioStateMapping || setting.portfolioStateMapping === "")) {
+                card.getRecord().set('State', setting.portfolioStateMapping);
+            }
         }
     },
 
