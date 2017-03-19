@@ -1,8 +1,22 @@
-#Portfolio Kanban Using Alternate Field
+# Portfolio Kanban Using Alternate Field
 
 The current Portfolio Kanban board uses the State field for columns.  Want
 to have all the same WIP/Policy availability but use a different field, much
 like the story/defect one does.
+
+The new version of the board allows for mapping fields other than state to portfolio item state values.  
+![ScreenShot](./images/portfolio-alternate-kanban-field.png)
+
+## App Setting
+
+![ScreenShot](./images/portfolio-alternate-kanban-board-settings.png)
+
+#####Portfolio Item type is the type of card that will show on the board
+#####Columns is what field the columns will be
+#####Mappings Grid is where the user determines which columns to show, what the work in progress is and what the mapping to the Portfolio State field is
+
+######Portfolio State Mapping = -- No Mapping -- means that movement to that column will not affect the state field of the portfolio item
+######Portfolio State Mapping = -- No Entry -- means that movement to that column will set the portfolio item state to no state.  
 
 ## Development Notes
 
