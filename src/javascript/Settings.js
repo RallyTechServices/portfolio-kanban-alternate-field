@@ -57,6 +57,12 @@ Ext.define('Rally.apps.kanban.Settings', {
                             this.setValue(selectedField);
                         }
 
+                    },
+                    modelselected: function(model){
+                            var selectedField = this.getValue();
+                            this.refreshWithNewModelType(model);
+                            this.setValue(selectedField);
+
                     }
                 },
                 bubbleEvents: ['fieldselected', 'fieldready']

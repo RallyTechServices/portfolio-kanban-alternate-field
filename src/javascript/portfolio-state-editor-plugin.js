@@ -11,7 +11,7 @@ Ext.override(Ext.grid.plugin.CellEditing,{
             //Overriding to save the record so we can set the name, too.
             context.editorRecord = me.activeEditor.field && me.activeEditor.field.getRecord &&
                     me.activeEditor.field.getRecord() &&
-                    me.activeEditor.field.getRecord().getData() || {value: null, name: me.activeEditor.allowBlankText };
+                    me.activeEditor.field.getRecord().getData() || {value: null, name: "-- No Mapping --" };
 
             me.setActiveEditor(null);
             me.setActiveColumn(null);
