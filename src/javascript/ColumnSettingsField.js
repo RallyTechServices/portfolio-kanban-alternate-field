@@ -54,6 +54,14 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
             fields: ['column', 'shown', 'wip', 'portfolioStateMapping', 'portfolioStateName', 'cardFields','ref','type'],
             data: []
         });
+        this._buildGrid();
+
+    },
+
+    _buildGrid: function(){
+        if (this._grid) {
+            this._grid.destroy();
+        }
 
         this._grid = Ext.create('Rally.ui.grid.Grid', {
             autoWidth: true,
@@ -69,7 +77,7 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
         });
         this._grid.on('validateedit', function(editor, e) {
             var field = editor.field || editor.editors && editor.editors.items && editor.editors.items.length > 0 &&
-                        editor.editors.items[0].field && editor.editors.items[0].field.name;
+                editor.editors.items[0].field && editor.editors.items[0].field.name;
             if (field === "portfolioStateMapping"){
                 e.record.set('portfolioStateName',  e && e.editorRecord && e.editorRecord.name || "-- No Mapping --");
                 if (!e.record.get('shown') &&  e.editorRecord && e.editorRecord.name !== "-- No Mapping --"){e.record.set('shown', true)}
@@ -77,7 +85,6 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
             return true;
         });
     },
-
     _getColumnCfgs: function() {
         var modelType = this.modelType;
 
@@ -138,19 +145,19 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
                 hidden:true
             }];
 
-
-        columns.push({
-            text: 'Portfolio State Mapping',
-            dataIndex: 'portfolioStateMapping',
-            emptyCellText: '--No Mapping--',
-            editable: false,
-            flex: 2,
-            //hidden:this.fieldName !== "State",
-            editor: this._getPortfolioStateEditorConfig(modelType, this.fieldName),
-            renderer: function(v,m,r){
-                return r.get('portfolioStateName') || r.get('portfolioStateMapping');
-            }
-        });
+        if (this.fieldName !== "State"){
+            columns.push({
+                text: 'Portfolio State Mapping',
+                dataIndex: 'portfolioStateMapping',
+                emptyCellText: '--No Mapping--',
+                editable: false,
+                flex: 2,
+                editor: this._getPortfolioStateEditorConfig(modelType),
+                renderer: function(v,m,r){
+                    return r.get('portfolioStateName') || r.get('portfolioStateMapping');
+                }
+            });
+        }
 
         if (this.shouldShowColumnLevelFieldPicker) {
             columns.push({
@@ -185,21 +192,13 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
         }
         return columns;
     },
-    _getPortfolioStateEditorConfig: function(model, field){
-
-        if (field === "State"){
-            return {
-                xtype: 'rallytextfield',
-                disabled: true,
-                value: null,
-                emptyText: '-- No Mapping --'
-            };
-        }
+    _getPortfolioStateEditorConfig: function(model){
 
         return {
             xtype: 'rallyfieldvaluecombobox',
             model: Ext.identityFn(model),
             field: 'State',
+            disabled: false,
             listeners: {
                 ready: function (combo) {
                     var noMapping = {};
@@ -306,37 +305,43 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
 
     refreshWithNewField: function(field) {
         delete this._storeLoaded;
+        var previousField = this.fieldName;
         this.fieldName = field && field.name;
 
-        this._refreshMappingEditor(this.fieldName, this.modelType);
+        this._refreshMappingEditor(this.modelType);
 
         field.getAllowedValueStore().load({
             callback: function(records, operation, success) {
                 var data = Ext.Array.map(records, this._recordToGridRow, this);
                 this._store.loadRawData(data);
                 this.fireEvent('ready');
+                if (this.fieldName === 'State' || previousField === "State"){
+                    //we need to rebuild the grid
+                    this._buildGrid();
+                }
                 this._storeLoaded = true;
             },
             scope: this
         });
     },
-    _refreshMappingEditor: function(field, model){
+    _refreshMappingEditor: function(model){
 
         if (this._grid && this._grid.columns){
             Ext.Array.each(this._grid.columns, function(c){
                 if (c.dataIndex === 'portfolioStateMapping'){ //} && c.editor){
-                    c.setEditor(this._getPortfolioStateEditorConfig(model, field));
+                    c.setEditor(this._getPortfolioStateEditorConfig(model));
                     return false;
                 }
             }, this);
         }
     },
     refreshWithNewModel: function(model){
+        console.log('refreshWithNewModel', model, this.modelType);
         if (model !== this.modelType){
+            console.log('refreshWithNewModel', model, this.modelType,  this.fieldName);
+            this._refreshMappingEditor(model);
 
-            this._refreshMappingEditor(this.fieldName, model);
-
-            if (this.modelType){
+            //if (this.modelType){
                 this.modelType = model;
 
                 this._store.each(function(r){
@@ -344,7 +349,7 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
                     r.set('portfolioStateName', '');
                     r.save();
                 });
-            }
+            //}
 
         }
 
