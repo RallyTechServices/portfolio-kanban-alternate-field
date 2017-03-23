@@ -128,7 +128,10 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
     _getGridboardConfig: function(cardboardConfig) {
         var context = this.getContext(),
             modelNames = this._getDefaultTypes(),
-            blacklist = ['Successors', 'Predecessors', 'DisplayColor'];
+            blacklist = ['Successors', 'Predecessors', 'DisplayColor'],
+            height = this.getHeight();
+
+        this.logger.log('_getGridboardConfig', height);
 
         return {
             xtype: 'rallygridboard',
@@ -159,7 +162,10 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
                         {
                             collapsed: false,
                             quickFilterPanelConfig: {
-                                defaultFields: ['Owner']
+                                defaultFields: ['Owner'],
+                                addQuickFilterConfig: {
+                                    whiteListFields: ['Milestones']
+                                }
                             }
                         }
                     }
@@ -184,7 +190,7 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
             storeConfig: {
                 filters: this._getFilters()
             },
-           // height: this.getHeight && this.getHeight()
+            height: height
         };
     },
 
