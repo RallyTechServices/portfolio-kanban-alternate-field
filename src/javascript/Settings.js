@@ -104,8 +104,9 @@ Ext.define('Rally.apps.kanban.Settings', {
             readyEvent: 'ready',
             isAllowedFieldFn: function(field) {
                 var attr = field.attributeDefinition;
+                console.log('field', field.name, attr);
                 return (attr.Custom && (attr.Constrained || attr.AttributeType.toLowerCase() !== 'string') ||
-                    attr.Constrained || _.contains(['boolean'], attr.AttributeType.toLowerCase())) &&
+                    attr.Constrained || field.name === "Parent" ||  _.contains(['boolean'], attr.AttributeType.toLowerCase())) &&
                     !_.contains(['web_link', 'text', 'date'], attr.AttributeType.toLowerCase());
             },
             explicitFields: [
