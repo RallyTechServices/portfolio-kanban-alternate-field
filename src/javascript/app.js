@@ -129,7 +129,8 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
         var context = this.getContext(),
             modelNames = this._getDefaultTypes(),
             blacklist = ['Successors', 'Predecessors', 'DisplayColor'],
-            height = this.getHeight();
+            height = this.getHeight(),
+            typeName = modelNames[0].replace('PortfolioItem/', '');
 
         this.logger.log('_getGridboardConfig', height);
 
@@ -142,6 +143,7 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
                 {
                     ptype: 'rallygridboardaddnew',
                     addNewControlConfig: {
+                        fieldLabel: "New " + typeName,
                         listeners: {
                             beforecreate: this._onBeforeCreate,
                             beforeeditorshow: this._onBeforeEditorShow,
