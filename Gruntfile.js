@@ -90,11 +90,15 @@ module.exports = function(grunt) {
         },
         jasmine: {
             fast: {
-                src: 'src/**/*.js',
+                src: config.js_files,
                 options: {
                     specs: 'test/fast/*-spec.js',
                     helpers: 'test/fast/*Helper.js',
                     template: 'test/fast/custom.tmpl',
+                    vendor:[
+                        'node_modules/rally-sdk2-test-utils/src/sdk/' + config.sdk + '/sdk-debug.js',
+                        'node_modules/rally-sdk2-test-utils/dist/sdk2-test-utils.js'
+                    ],
                     templateOptions: config,
                     keepRunner: true,
                     junit: {
@@ -103,7 +107,7 @@ module.exports = function(grunt) {
                 }
             },
             slow: {
-                src: 'src/**/*.js',
+                src: config.js_files,
                 options: {
                     specs: 'test/slow/*-spec.js',
                     helpers: 'test/slow/*Helper.js',
