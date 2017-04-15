@@ -129,7 +129,7 @@ Ext.define("TSPortfolioKanbanAlternateFieldApp", {
         var context = this.getContext(),
             modelNames = this._getDefaultTypes(),
             blacklist = ['Successors', 'Predecessors', 'DisplayColor'],
-            height = this.getHeight(),
+            height = this.getHeight && this.getHeight(),
             typeName = modelNames[0].replace('PortfolioItem/', '');
 
         this.logger.log('_getGridboardConfig', height);

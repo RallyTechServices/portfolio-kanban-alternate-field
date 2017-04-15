@@ -71,14 +71,16 @@ Ext.define('Rally.apps.kanban.ColumnSettingsField', {
             showRowActionsColumn: false,
             enableRanking: false,
             store: this._store,
+            height: 225,
+            scroll: 'vertical',
+            autoScroll: true,
             editingConfig: {
                 publishMessages: false
             }
         });
         this._grid.on('validateedit', function(editor, e) {
-            var field = editor.field || editor.editors && editor.editors.items && editor.editors.items.length > 0 &&
-                editor.editors.items[0].field && editor.editors.items[0].field.name;
-            if (field === "portfolioStateMapping"){
+
+            if (e && e.column && e.column.dataIndex === 'portfolioStateMapping'){
                 e.record.set('portfolioStateName',  e && e.editorRecord && e.editorRecord.name || "-- No Mapping --");
                 if (!e.record.get('shown') &&  e.editorRecord && e.editorRecord.name !== "-- No Mapping --"){e.record.set('shown', true)}
             }

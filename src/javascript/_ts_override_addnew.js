@@ -65,3 +65,4 @@ Ext.override(Rally.ui.AddNew, {
             return items;
         }
     });
+
